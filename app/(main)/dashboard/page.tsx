@@ -11,8 +11,23 @@ import { useWeightStore } from "@/store/weightStore";
 
 export default function DashboardPage() {
   const weights = useWeightStore((state) => state.weights);
+  const hasHydrated = useWeightStore((state) => state.hasHydrated);
+
   const { latestWeight, averageWeight, maxWeight, minWeight } =
     useWeightStats(weights);
+
+  if (!hasHydrated) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <DashboardHeader />
+        <section className="mx-auto flex min-h-[calc(100vh-64px)] w-full max-w-7xl items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
+          <div className="rounded-2xl border border-gray-200 bg-white px-6 py-4 text-sm text-gray-600 shadow-sm">
+            저장된 기록을 불러오는 중입니다...
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gray-50">
