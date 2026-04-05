@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import { useWeightStore } from "@/store/weightStore";
+import EmptyState from "./EmptyState";
 
 export default function WeightChart() {
   const weights = useWeightStore((state) => state.weights);
@@ -30,10 +31,11 @@ export default function WeightChart() {
       </div>
 
       {chartData.length === 0 ? (
-        <div className="mt-6 flex min-h-[420px] items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50">
-          <p className="text-sm text-gray-500">
-            아직 표시할 체중 기록이 없어요.
-          </p>
+        <div className="mt-6">
+          <EmptyState
+            message="아직 표시할 체중 기록이 없어요."
+            minHeight="min-h-[420px]"
+          />
         </div>
       ) : (
         <div className="mt-6 h-[420px] rounded-xl border border-gray-100 bg-gray-50 p-4">
@@ -48,14 +50,10 @@ export default function WeightChart() {
               />
               <Tooltip
                 formatter={(value) => {
-                  const weight =
-                    typeof value === "number" ? value : Number(value);
-
-                  if (Number.isNaN(weight)) {
+                  if (typeof value !== "number") {
                     return [String(value), "체중"];
                   }
-
-                  return [`${weight.toFixed(1)}kg`, "체중"];
+                  return [`${value.toFixed(1)}kg`, "체중"];
                 }}
                 labelFormatter={(label, payload) => {
                   if (!payload || payload.length === 0) return label;

@@ -1,6 +1,8 @@
 "use client";
 
+import Button from "@/components/ui/Button";
 import { useWeightStore } from "@/store/weightStore";
+import EmptyState from "./EmptyState";
 
 export default function WeightList() {
   const weights = useWeightStore((state) => state.weights);
@@ -21,9 +23,7 @@ export default function WeightList() {
 
       <div className="mt-5 flex flex-col gap-3">
         {sortedWeights.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center text-sm text-gray-500">
-            아직 등록된 체중 기록이 없어요.
-          </div>
+          <EmptyState message="아직 등록된 체중 기록이 없어요." />
         ) : (
           sortedWeights.map((item) => {
             const isEditing = editingId === item.id;
@@ -51,20 +51,20 @@ export default function WeightList() {
                   </div>
 
                   <div className="flex gap-2">
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
                       onClick={() => startEditing(item.id)}
-                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-100"
                     >
                       수정
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="danger"
                       onClick={() => deleteWeight(item.id)}
-                      className="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-600 transition hover:bg-red-50"
                     >
                       삭제
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>

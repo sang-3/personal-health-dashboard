@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Textarea from "@/components/ui/Textarea";
 import { useWeightStore } from "@/store/weightStore";
 
 export default function WeightForm() {
@@ -91,65 +94,41 @@ export default function WeightForm() {
         </h2>
 
         {isEditMode && (
-          <button
-            type="button"
-            onClick={handleCancelEdit}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-100"
-          >
+          <Button type="button" variant="secondary" onClick={handleCancelEdit}>
             수정 취소
-          </button>
+          </Button>
         )}
       </div>
 
       <form className="mt-5 flex flex-col gap-4" onSubmit={handleSubmit}>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="date" className="text-sm font-medium text-gray-700">
-            날짜
-          </label>
-          <input
-            id="date"
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-gray-500"
-          />
-        </div>
+        <Input
+          id="date"
+          label="날짜"
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+        />
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="weight" className="text-sm font-medium text-gray-700">
-            체중(kg)
-          </label>
-          <input
-            id="weight"
-            type="number"
-            step="0.1"
-            placeholder="예: 68.4"
-            value={weight}
-            onChange={(e) => setWeight(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-gray-500"
-          />
-        </div>
+        <Input
+          id="weight"
+          label="체중(kg)"
+          type="number"
+          step="0.1"
+          placeholder="예: 68.4"
+          value={weight}
+          onChange={(e) => setWeight(e.target.value)}
+        />
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="memo" className="text-sm font-medium text-gray-700">
-            메모
-          </label>
-          <textarea
-            id="memo"
-            rows={3}
-            placeholder="간단한 메모를 입력하세요"
-            value={memo}
-            onChange={(e) => setMemo(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-gray-500"
-          />
-        </div>
+        <Textarea
+          id="memo"
+          label="메모"
+          rows={3}
+          placeholder="간단한 메모를 입력하세요"
+          value={memo}
+          onChange={(e) => setMemo(e.target.value)}
+        />
 
-        <button
-          type="submit"
-          className="rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
-        >
-          {isEditMode ? "수정 완료" : "저장하기"}
-        </button>
+        <Button type="submit">{isEditMode ? "수정 완료" : "저장하기"}</Button>
       </form>
     </section>
   );
