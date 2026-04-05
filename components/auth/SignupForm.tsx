@@ -1,10 +1,14 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 
 export default function SignupForm() {
+  const router = useRouter();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,6 +33,8 @@ export default function SignupForm() {
       password,
       confirmPassword,
     });
+
+    router.push("/dashboard");
   };
 
   return (
@@ -70,6 +76,16 @@ export default function SignupForm() {
       />
 
       <Button type="submit">회원가입</Button>
+
+      <p className="text-center text-sm text-gray-600">
+        이미 계정이 있나요?{" "}
+        <Link
+          href="/login"
+          className="font-medium text-gray-900 underline underline-offset-4"
+        >
+          로그인
+        </Link>
+      </p>
     </form>
   );
 }

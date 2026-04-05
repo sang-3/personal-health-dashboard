@@ -1,14 +1,18 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 
 export default function LoginForm() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!email || !password) {
@@ -17,13 +21,12 @@ export default function LoginForm() {
     }
 
     console.log("로그인 시도:", { email, password });
+
+    router.push("/dashboard");
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex w-full max-w-md flex-col gap-4"
-    >
+    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4">
       <Input
         id="email"
         label="이메일"
@@ -43,6 +46,16 @@ export default function LoginForm() {
       />
 
       <Button type="submit">로그인</Button>
+
+      <p className="text-center text-sm text-gray-600">
+        아직 계정이 없나요?{" "}
+        <Link
+          href="/signup"
+          className="font-medium text-gray-900 underline underline-offset-4"
+        >
+          회원가입
+        </Link>
+      </p>
     </form>
   );
 }
