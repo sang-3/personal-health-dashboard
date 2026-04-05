@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { signupUser } from "@/lib/auth";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 
@@ -29,7 +30,7 @@ export default function SignupForm() {
     setFormError("");
   };
 
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     resetErrors();
@@ -66,11 +67,19 @@ export default function SignupForm() {
     try {
       setIsLoading(true);
 
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await signupUser({
+        name,
+        email,
+        password,
+      });
 
-      router.push("/dashboard");
-    } catch {
-      setFormError("회원가입 중 문제가 발생했습니다.");
+      router.push("/login");
+    } catch (error) {
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : "회원가입 중 문제가 발생했습니다.",
+      );
     } finally {
       setIsLoading(false);
     }

@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { loginUser } from "@/lib/auth";
+import useUserStore from "@/store/userStore";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 
 export default function LoginForm() {
   const router = useRouter();
+  const setUser = useUserStore((state) => state.setUser);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,7 +28,6 @@ export default function LoginForm() {
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     resetErrors();
 
     let hasError = false;
@@ -45,11 +47,19 @@ export default function LoginForm() {
     try {
       setIsLoading(true);
 
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      const user = await loginUser({
+        email,
+        password,
+      });
 
+      setUser(user);
       router.push("/dashboard");
-    } catch {
-      setFormError("로그인 중 문제가 발생했습니다.");
+    } catch (error) {
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : "로그인 중 문제가 발생했습니다.",
+      );
     } finally {
       setIsLoading(false);
     }

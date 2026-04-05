@@ -1,10 +1,18 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
-import { useWeightStore } from "@/store/weightStore";
+import useUserStore from "@/store/userStore";
 
 export default function DashboardHeader() {
-  const resetWeights = useWeightStore((state) => state.resetWeights);
+  const router = useRouter();
+  const user = useUserStore((state) => state.user);
+  const resetUser = useUserStore((state) => state.resetUser);
+
+  const handleLogout = () => {
+    resetUser();
+    router.push("/login");
+  };
 
   return (
     <header className="border-b border-gray-200 bg-white">
@@ -14,11 +22,10 @@ export default function DashboardHeader() {
         </p>
 
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-600">홍상님</span>
-          <Button variant="secondary" type="button" onClick={resetWeights}>
-            샘플 복원
-          </Button>
-          <Button variant="secondary" type="button">
+          <span className="text-sm text-gray-600">
+            {user?.name ?? "사용자"}님
+          </span>
+          <Button variant="secondary" type="button" onClick={handleLogout}>
             로그아웃
           </Button>
         </div>
