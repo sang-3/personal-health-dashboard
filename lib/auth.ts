@@ -1,11 +1,12 @@
 import { LoginForm, User, UserCreateForm } from "@/types/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID;
 
 /**
  * 로그인 API
  */
-export async function loginUser(payload: LoginForm): Promise<User> {
+export async function loginUser(body: LoginForm): Promise<User> {
   if (!API_URL) {
     throw new Error("API 주소가 설정되지 않았습니다.");
   }
@@ -14,9 +15,9 @@ export async function loginUser(payload: LoginForm): Promise<User> {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Client-Id": "openmarket",
+      "Client-Id": `${CLIENT_ID}`,
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   });
 
   const data = await response.json();
@@ -25,8 +26,7 @@ export async function loginUser(payload: LoginForm): Promise<User> {
     throw new Error(data?.message || "로그인에 실패했습니다.");
   }
 
-  // 👉 여기 중요 (API 응답 구조에 맞게 수정 필요)
-  return data.item ?? data.user ?? data;
+  return data.item;
 }
 
 /**
@@ -36,8 +36,6 @@ export async function signupUser(payload: UserCreateForm) {
   if (!API_URL) {
     throw new Error("API 주소가 설정되지 않았습니다.");
   }
-
-  // const hasAttach = payload.attach && payload.attach.length > 0;
 
   const response = await fetch(`${API_URL}/users`, {
     method: "POST",
