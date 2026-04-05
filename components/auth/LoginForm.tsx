@@ -12,17 +12,47 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [formError, setFormError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const resetErrors = () => {
+    setEmailError("");
+    setPasswordError("");
+    setFormError("");
+  };
+
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!email || !password) {
-      alert("이메일과 비밀번호를 입력해주세요.");
-      return;
+    resetErrors();
+
+    let hasError = false;
+
+    if (!email) {
+      setEmailError("이메일을 입력해주세요.");
+      hasError = true;
     }
 
-    console.log("로그인 시도:", { email, password });
+    if (!password) {
+      setPasswordError("비밀번호를 입력해주세요.");
+      hasError = true;
+    }
 
-    router.push("/dashboard");
+    if (hasError) return;
+
+    try {
+      setIsLoading(true);
+
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      router.push("/dashboard");
+    } catch {
+      setFormError("로그인 중 문제가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -33,7 +63,11 @@ export default function LoginForm() {
         type="email"
         placeholder="example@email.com"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        error={emailError}
+        onChange={(e) => {
+          setEmail(e.target.value);
+          if (emailError) setEmailError("");
+        }}
       />
 
       <Input
@@ -42,10 +76,20 @@ export default function LoginForm() {
         type="password"
         placeholder="비밀번호 입력"
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        error={passwordError}
+        onChange={(e) => {
+          setPassword(e.target.value);
+          if (passwordError) setPasswordError("");
+        }}
       />
 
-      <Button type="submit">로그인</Button>
+      {formError && (
+        <p className="text-sm font-medium text-red-600">{formError}</p>
+      )}
+
+      <Button type="submit" disabled={isLoading}>
+        {isLoading ? "로그인 중..." : "로그인"}
+      </Button>
 
       <p className="text-center text-sm text-gray-600">
         아직 계정이 없나요?{" "}
