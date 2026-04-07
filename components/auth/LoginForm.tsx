@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { loginUser } from "@/lib/auth";
 import useUserStore from "@/store/userStore";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginForm() {
   const router = useRouter();
@@ -26,14 +29,18 @@ export default function LoginForm() {
     setFormError("");
   };
 
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     resetErrors();
 
+    const trimmedEmail = email.trim();
     let hasError = false;
 
-    if (!email) {
+    if (!trimmedEmail) {
       setEmailError("이메일을 입력해주세요.");
+      hasError = true;
+    } else if (!emailRegex.test(trimmedEmail)) {
+      setEmailError("올바른 이메일 형식을 입력해주세요.");
       hasError = true;
     }
 
@@ -48,18 +55,21 @@ export default function LoginForm() {
       setIsLoading(true);
 
       const user = await loginUser({
-        email,
+        email: trimmedEmail,
         password,
       });
 
       setUser(user);
+      toast.success("로그인되었습니다.");
       router.push("/dashboard");
     } catch (error) {
-      setFormError(
+      const message =
         error instanceof Error
           ? error.message
-          : "로그인 중 문제가 발생했습니다.",
-      );
+          : "로그인 중 문제가 발생했습니다.";
+
+      setFormError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

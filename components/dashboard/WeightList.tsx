@@ -1,45 +1,61 @@
 "use client";
 
 import Button from "@/components/ui/Button";
-import { useWeightStore } from "@/store/weightStore";
+import { formatDate } from "@/lib/utils";
+import { WeightRecord } from "@/types/weight";
 import EmptyState from "./EmptyState";
 
-export default function WeightList() {
-  const weights = useWeightStore((state) => state.weights);
-  const deleteWeight = useWeightStore((state) => state.deleteWeight);
-  const startEditing = useWeightStore((state) => state.startEditing);
-  const editingId = useWeightStore((state) => state.editingId);
+type WeightListProps = {
+  items: WeightRecord[];
+  editingId: string | null;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+};
 
-  const sortedWeights = [...weights].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-  );
-
+export default function WeightList({
+  items,
+  editingId,
+  onEdit,
+  onDelete,
+}: WeightListProps) {
   return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">체중 기록 목록</h2>
-        <span className="text-sm text-gray-500">{sortedWeights.length}건</span>
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">
+            체중 기록 목록
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            총 {items.length}개의 기록
+          </p>
+        </div>
       </div>
 
       <div className="mt-5 flex flex-col gap-3">
-        {sortedWeights.length === 0 ? (
-          <EmptyState message="아직 등록된 체중 기록이 없어요." />
+        {items.length === 0 ? (
+          <EmptyState
+            title="아직 기록이 없습니다"
+            description="첫 체중 기록을 추가해보세요."
+            caption="기록이 쌓일수록 변화 추이를 확인할 수 있습니다."
+          />
         ) : (
-          sortedWeights.map((item) => {
+          items.map((item) => {
             const isEditing = editingId === item.id;
 
             return (
               <div
                 key={item.id}
-                className="rounded-xl border border-gray-200 p-4"
+                className="rounded-xl border border-gray-200 p-4 transition hover:bg-gray-50"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">{item.date}</p>
-                    <p className="mt-1 text-lg font-semibold text-gray-900">
-                      {item.weight.toFixed(1)}kg
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm text-gray-500">
+                      {formatDate(item.date)}
                     </p>
-                    <p className="mt-2 text-sm text-gray-600">
+                    <p className="mt-1 text-lg font-semibold text-gray-900">
+                      {item.weightKg.toFixed(1)}kg
+                    </p>
+                    <p className="mt-2 break-words text-sm text-gray-600">
                       {item.memo?.trim() ? item.memo : "메모 없음"}
                     </p>
 
@@ -50,18 +66,20 @@ export default function WeightList() {
                     )}
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex w-full gap-2 sm:w-auto">
                     <Button
                       type="button"
                       variant="secondary"
-                      onClick={() => startEditing(item.id)}
+                      className="flex-1 sm:flex-none"
+                      onClick={() => onEdit(item.id)}
                     >
                       수정
                     </Button>
                     <Button
                       type="button"
                       variant="danger"
-                      onClick={() => deleteWeight(item.id)}
+                      className="flex-1 sm:flex-none"
+                      onClick={() => onDelete(item.id)}
                     >
                       삭제
                     </Button>

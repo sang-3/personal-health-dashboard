@@ -4,14 +4,15 @@ export interface Token {
 }
 
 export interface User {
-  _id: number;
+  type: "user" | "seller";
+  _id: string;
   email: string;
   name: string;
   image?: string;
   token?: Token;
 }
 
-export type UserCreateForm = Pick<User, "name" | "email"> & {
+export type UserCreateForm = Pick<User, "name" | "email" | "type"> & {
   password: string;
   attach?: FileList;
 };

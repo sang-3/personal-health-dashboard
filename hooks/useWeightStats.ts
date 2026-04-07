@@ -7,19 +7,19 @@
 import { WeightRecord } from "@/types/weight";
 
 type WeightStats = {
-  latestWeight: number | null;
-  averageWeight: number | null;
-  maxWeight: number | null;
-  minWeight: number | null;
+  latestWeightKg: number | null;
+  averageWeightKg: number | null;
+  maxWeightKg: number | null;
+  minWeightKg: number | null;
 };
 
 export function useWeightStats(weights: WeightRecord[]): WeightStats {
   if (!weights.length) {
     return {
-      latestWeight: null,
-      averageWeight: null,
-      maxWeight: null,
-      minWeight: null,
+      latestWeightKg: null,
+      averageWeightKg: null,
+      maxWeightKg: null,
+      minWeightKg: null,
     };
   }
 
@@ -27,19 +27,19 @@ export function useWeightStats(weights: WeightRecord[]): WeightStats {
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 
-  const latestWeight = sortedWeights[0].weight;
+  const latestWeightKg = sortedWeights[0].weightKg;
 
-  const total = weights.reduce((sum, item) => sum + item.weight, 0);
-  const averageWeight = Number((total / weights.length).toFixed(1));
+  const total = weights.reduce((sum, item) => sum + item.weightKg, 0);
+  const averageWeightKg = Number((total / weights.length).toFixed(1));
 
-  const values = weights.map((item) => item.weight);
-  const maxWeight = Math.max(...values);
-  const minWeight = Math.min(...values);
+  const values = weights.map((item) => item.weightKg);
+  const maxWeightKg = Math.max(...values);
+  const minWeightKg = Math.min(...values);
 
   return {
-    latestWeight,
-    averageWeight,
-    maxWeight,
-    minWeight,
+    latestWeightKg,
+    averageWeightKg,
+    maxWeightKg,
+    minWeightKg,
   };
 }

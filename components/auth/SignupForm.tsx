@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { signupUser } from "@/lib/auth";
+import { toast } from "sonner";
+import { signUpWithSupabase } from "@/lib/auth";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function SignupForm() {
   const router = useRouter();
@@ -35,20 +38,29 @@ export default function SignupForm() {
 
     resetErrors();
 
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+
     let hasError = false;
 
-    if (!name) {
+    if (!trimmedName) {
       setNameError("이름을 입력해주세요.");
       hasError = true;
     }
 
-    if (!email) {
+    if (!trimmedEmail) {
       setEmailError("이메일을 입력해주세요.");
+      hasError = true;
+    } else if (!emailRegex.test(trimmedEmail)) {
+      setEmailError("올바른 이메일 형식을 입력해주세요.");
       hasError = true;
     }
 
     if (!password) {
       setPasswordError("비밀번호를 입력해주세요.");
+      hasError = true;
+    } else if (password.length < 8) {
+      setPasswordError("비밀번호는 8자 이상이어야 합니다.");
       hasError = true;
     }
 
@@ -67,19 +79,22 @@ export default function SignupForm() {
     try {
       setIsLoading(true);
 
-      await signupUser({
-        name,
-        email,
+      await signUpWithSupabase({
+        name: trimmedName,
+        email: trimmedEmail,
         password,
       });
 
+      toast.success("회원가입이 완료되었습니다. 이메일을 확인해주세요.");
       router.push("/login");
     } catch (error) {
-      setFormError(
+      const message =
         error instanceof Error
           ? error.message
-          : "회원가입 중 문제가 발생했습니다.",
-      );
+          : "회원가입 중 문제가 발생했습니다.";
+
+      setFormError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

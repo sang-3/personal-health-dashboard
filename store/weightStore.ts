@@ -1,97 +1,119 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { initialWeightData } from "@/lib/mockData";
-import { WeightRecord } from "@/types/weight";
-
-type WeightFormValues = {
-  date: string;
-  weight: number;
-  memo?: string;
-};
+import {
+  WeightFormValues,
+  WeightRecord,
+  WeightStorageMap,
+} from "@/types/weight";
 
 type WeightState = {
-  weights: WeightRecord[];
+  weightMap: WeightStorageMap;
   editingId: string | null;
   hasHydrated: boolean;
 
-  addWeight: (data: WeightFormValues) => void;
-  updateWeight: (id: string, data: WeightFormValues) => void;
-  deleteWeight: (id: string) => void;
+  setWeightsByUser: (userId: string, weights: WeightRecord[]) => void;
+
+  addWeight: (userId: string, data: WeightFormValues) => void;
+  updateWeight: (userId: string, id: string, data: WeightFormValues) => void;
+  deleteWeight: (userId: string, id: string) => void;
 
   startEditing: (id: string) => void;
   cancelEditing: () => void;
-  resetWeights: () => void;
+  clearEditing: () => void;
+  clearWeightsByUser: (userId: string) => void;
   setHasHydrated: (value: boolean) => void;
 };
 
 export const useWeightStore = create<WeightState>()(
   persist(
     (set) => ({
-      weights: initialWeightData,
+      weightMap: {},
       editingId: null,
       hasHydrated: false,
 
-      addWeight: (data) =>
+      setWeightsByUser: (userId, weights) =>
         set((state) => ({
-          weights: [
-            {
-              id: crypto.randomUUID(),
-              date: data.date,
-              weight: data.weight,
-              memo: data.memo?.trim() || "",
-              createdAt: new Date().toISOString(),
+          weightMap: {
+            ...state.weightMap,
+            [userId]: weights,
+          },
+        })),
+
+      addWeight: (userId, data) =>
+        set((state) => {
+          const current = state.weightMap[userId] ?? [];
+
+          const nextItem: WeightRecord = {
+            id: crypto.randomUUID(),
+            userId,
+            date: data.date,
+            weightKg: data.weightKg,
+            memo: data.memo?.trim() || "",
+            createdAt: new Date().toISOString(),
+          };
+
+          return {
+            weightMap: {
+              ...state.weightMap,
+              [userId]: [nextItem, ...current],
             },
-            ...state.weights,
-          ],
-        })),
+          };
+        }),
 
-      updateWeight: (id, data) =>
+      updateWeight: (userId, id, data) =>
+        set((state) => {
+          const current = state.weightMap[userId] ?? [];
+
+          return {
+            weightMap: {
+              ...state.weightMap,
+              [userId]: current.map((item) =>
+                item.id === id
+                  ? {
+                      ...item,
+                      date: data.date,
+                      weightKg: data.weightKg,
+                      memo: data.memo?.trim() || "",
+                    }
+                  : item,
+              ),
+            },
+            editingId: null,
+          };
+        }),
+
+      deleteWeight: (userId, id) =>
+        set((state) => {
+          const current = state.weightMap[userId] ?? [];
+
+          return {
+            weightMap: {
+              ...state.weightMap,
+              [userId]: current.filter((item) => item.id !== id),
+            },
+            editingId: state.editingId === id ? null : state.editingId,
+          };
+        }),
+
+      startEditing: (id) => set({ editingId: id }),
+      cancelEditing: () => set({ editingId: null }),
+      clearEditing: () => set({ editingId: null }),
+
+      clearWeightsByUser: (userId) =>
         set((state) => ({
-          weights: state.weights.map((item) =>
-            item.id === id
-              ? {
-                  ...item,
-                  date: data.date,
-                  weight: data.weight,
-                  memo: data.memo?.trim() || "",
-                }
-              : item,
-          ),
-          editingId: null,
+          weightMap: {
+            ...state.weightMap,
+            [userId]: [],
+          },
         })),
 
-      deleteWeight: (id) =>
-        set((state) => ({
-          weights: state.weights.filter((item) => item.id !== id),
-          editingId: state.editingId === id ? null : state.editingId,
-        })),
-
-      startEditing: (id) =>
-        set(() => ({
-          editingId: id,
-        })),
-
-      cancelEditing: () =>
-        set(() => ({
-          editingId: null,
-        })),
-
-      resetWeights: () =>
-        set(() => ({
-          weights: initialWeightData,
-          editingId: null,
-        })),
-
-      setHasHydrated: (value) =>
-        set(() => ({
-          hasHydrated: value,
-        })),
+      setHasHydrated: (value) => set({ hasHydrated: value }),
     }),
     {
       name: "weight-storage",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        weights: state.weights,
+        weightMap: state.weightMap,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
