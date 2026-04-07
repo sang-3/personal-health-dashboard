@@ -1,49 +1,21 @@
 import { createClient } from "@/lib/supabase/client";
 import { LoginForm, User, UserCreateForm } from "@/types/auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID;
+type SignupUserParams = {
+  name: string;
+  email: string;
+  password: string;
+};
 
-/**
- * 로그인 API
- */
-export async function loginUser(body: LoginForm): Promise<User> {
-  if (!API_URL) {
-    throw new Error("API 주소가 설정되지 않았습니다.");
-  }
-
-  const response = await fetch(`${API_URL}/users/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Client-Id": `${CLIENT_ID}`,
-    },
-    body: JSON.stringify(body),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data?.message || "로그인에 실패했습니다.");
-  }
-
-  return data.item;
-}
+type LoginUserParams = {
+  email: string;
+  password: string;
+};
 
 /**
  * 회원가입 API
  */
-type SignUpInput = {
-  email: string;
-  password: string;
-  name: string;
-};
-
-export async function signUpWithSupabase({
-  email,
-  password,
-  name,
-}: SignUpInput) {
+export async function signupUser({ name, email, password }: SignupUserParams) {
   const supabase = createClient();
 
   const { data, error } = await supabase.auth.signUp({
@@ -61,6 +33,34 @@ export async function signUpWithSupabase({
   }
 
   return data;
+}
+
+/**
+ * 로그인 API
+ */
+export async function loginUser({ email, password }: LoginUserParams) {
+  const supabase = createClient();
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+}
+
+export async function logoutUser() {
+  const supabase = createClient();
+
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }
 
 /**

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import SummaryCard from "@/components/dashboard/SummaryCard";
@@ -9,40 +8,65 @@ import WeightForm from "@/components/dashboard/WeightForm";
 import WeightList from "@/components/dashboard/WeightList";
 import WeightChart from "@/components/dashboard/WeightChart";
 import { useWeightStats } from "@/hooks/useWeightStats";
+import { createClient } from "@/lib/supabase/client";
 import { formatDate, formatWeightKg } from "@/lib/utils";
 import { useWeightStore } from "@/store/weightStore";
-import useUserStore from "@/store/userStore";
 import { WeightRecord } from "@/types";
 
 type PeriodFilter = "all" | "7d" | "30d" | "90d";
 type SortOrder = "latest" | "oldest";
 
+type DashboardUser = {
+  id: string;
+  name: string;
+  email: string;
+};
+
 const EMPTY_WEIGHTS: WeightRecord[] = [];
 
 export default function DashboardPage() {
-  const router = useRouter();
-
-  const user = useUserStore((state) => state.user);
-  const hasUserHydrated = useUserStore((state) => state.hasHydrated);
-
   const editingId = useWeightStore((state) => state.editingId);
   const deleteWeight = useWeightStore((state) => state.deleteWeight);
   const startEditing = useWeightStore((state) => state.startEditing);
   const hasWeightHydrated = useWeightStore((state) => state.hasHydrated);
 
-  const weights = useWeightStore((state) =>
-    user ? (state.weightMap[user._id] ?? EMPTY_WEIGHTS) : EMPTY_WEIGHTS,
-  );
+  const [user, setUser] = useState<DashboardUser | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const [keyword, setKeyword] = useState("");
   const [period, setPeriod] = useState<PeriodFilter>("all");
   const [sortOrder, setSortOrder] = useState<SortOrder>("latest");
 
+  const weights = useWeightStore((state) =>
+    user ? (state.weightMap[user.id] ?? EMPTY_WEIGHTS) : EMPTY_WEIGHTS,
+  );
+
   useEffect(() => {
-    if (hasUserHydrated && !user) {
-      router.push("/login");
-    }
-  }, [hasUserHydrated, user, router]);
+    const supabase = createClient();
+
+    const getCurrentUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+
+      if (error || !data.user) {
+        window.location.href = "/login";
+        return;
+      }
+
+      setUser({
+        id: data.user.id,
+        name:
+          typeof data.user.user_metadata?.name === "string" &&
+          data.user.user_metadata.name.trim()
+            ? data.user.user_metadata.name
+            : "사용자",
+        email: data.user.email ?? "",
+      });
+
+      setAuthLoading(false);
+    };
+
+    void getCurrentUser();
+  }, []);
 
   const filteredWeights = useMemo(() => {
     const now = new Date();
@@ -87,7 +111,7 @@ export default function DashboardPage() {
       ? Number((latestRecord.weightKg - prevRecord.weightKg).toFixed(1))
       : null;
 
-  if (!hasWeightHydrated || !hasUserHydrated) {
+  if (authLoading || !hasWeightHydrated) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
         <div className="rounded-2xl border border-gray-200 bg-white px-6 py-4 text-sm text-gray-600 shadow-sm">
@@ -206,7 +230,7 @@ export default function DashboardPage() {
               editingId={editingId}
               onEdit={startEditing}
               onDelete={(id) => {
-                deleteWeight(user._id, id);
+                deleteWeight(user.id, id);
                 toast.success("기록이 삭제되었습니다.");
               }}
             />

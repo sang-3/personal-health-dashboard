@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { loginUser } from "@/lib/auth";
-import useUserStore from "@/store/userStore";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 
@@ -13,7 +12,6 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginForm() {
   const router = useRouter();
-  const setUser = useUserStore((state) => state.setUser);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,6 +29,7 @@ export default function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     resetErrors();
 
     const trimmedEmail = email.trim();
@@ -54,14 +53,14 @@ export default function LoginForm() {
     try {
       setIsLoading(true);
 
-      const user = await loginUser({
+      await loginUser({
         email: trimmedEmail,
         password,
       });
 
-      setUser(user);
       toast.success("로그인되었습니다.");
       router.push("/dashboard");
+      router.refresh();
     } catch (error) {
       const message =
         error instanceof Error
@@ -112,7 +111,7 @@ export default function LoginForm() {
       </Button>
 
       <p className="text-center text-sm text-gray-600">
-        아직 계정이 없나요?{" "}
+        계정이 없나요?{" "}
         <Link
           href="/signup"
           className="font-medium text-gray-900 underline underline-offset-4"

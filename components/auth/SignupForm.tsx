@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { signUpWithSupabase } from "@/lib/auth";
+import { signupUser } from "@/lib/auth";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 
@@ -79,13 +79,13 @@ export default function SignupForm() {
     try {
       setIsLoading(true);
 
-      await signUpWithSupabase({
+      await signupUser({
         name: trimmedName,
         email: trimmedEmail,
         password,
       });
 
-      toast.success("회원가입이 완료되었습니다. 이메일을 확인해주세요.");
+      toast.success("회원가입이 완료되었습니다.");
       router.push("/login");
     } catch (error) {
       const message =

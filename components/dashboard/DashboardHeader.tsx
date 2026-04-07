@@ -1,20 +1,55 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
+import { createClient } from "@/lib/supabase/client";
+import { logoutUser } from "@/lib/auth";
 import { useWeightStore } from "@/store/weightStore";
-import useUserStore from "@/store/userStore";
 
 export default function DashboardHeader() {
   const router = useRouter();
-  const user = useUserStore((state) => state.user);
-  const resetUser = useUserStore((state) => state.resetUser);
   const clearEditing = useWeightStore((state) => state.clearEditing);
 
-  const handleLogout = () => {
-    clearEditing();
-    resetUser();
-    router.push("/login");
+  const [userName, setUserName] = useState("사용자");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    const getCurrentUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+
+      if (error || !data.user) {
+        setUserName("사용자");
+        return;
+      }
+
+      const name =
+        typeof data.user.user_metadata?.name === "string"
+          ? data.user.user_metadata.name
+          : "사용자";
+
+      setUserName(name);
+    };
+
+    void getCurrentUser();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+
+      clearEditing();
+      await logoutUser();
+
+      router.push("/login");
+      router.refresh();
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -25,11 +60,15 @@ export default function DashboardHeader() {
         </p>
 
         <div className="flex items-center gap-3 self-end sm:self-auto">
-          <span className="text-sm text-gray-600">
-            {user?.name ?? "사용자"}님
-          </span>
-          <Button variant="secondary" type="button" onClick={handleLogout}>
-            로그아웃
+          <span className="text-sm text-gray-600">{userName}님</span>
+
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
           </Button>
         </div>
       </div>
