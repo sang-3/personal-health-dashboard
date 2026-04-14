@@ -1,5 +1,11 @@
 import AuthCard from "@/components/auth/AuthCard";
 import LoginForm from "@/components/auth/LoginForm";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "로그인",
+  description: "Personal Health Dashboard 로그인 페이지",
+};
 
 export default function LoginPage() {
   return (

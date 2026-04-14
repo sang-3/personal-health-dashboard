@@ -1,13 +1,32 @@
+export type WeightRecordRow = {
+  id: string;
+  user_id: string;
+  date: string;
+  weight_kg: number;
+  memo: string | null;
+  created_at: string;
+};
+
 // 체중 기록 타입
+// 프론트에서 사용할 체중 기록 타입
 export type WeightRecord = {
-  id: string; // 각 기록 구분용
+  id: string;
   userId: string;
-  date: string; // 사용자가 입력한 축정 날찌
-  weightKg: number; // 체중 숫자
-  memo?: string; // 선택 메모
-  createdAt: string; // 기록 생성 시간
+  date: string;
+  weightKg: number;
+  memo: string;
+  createdAt: string;
 };
 
 export type WeightFormValues = Pick<WeightRecord, "date" | "weightKg" | "memo">;
 
-export type WeightStorageMap = Record<string, WeightRecord[]>;
+export function mapWeightRecord(row: WeightRecordRow): WeightRecord {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    date: row.date,
+    weightKg: row.weight_kg,
+    memo: row.memo ?? "",
+    createdAt: row.created_at,
+  };
+}

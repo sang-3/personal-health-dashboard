@@ -1,55 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import Button from "@/components/ui/Button";
-import { createClient } from "@/lib/supabase/client";
-import { logoutUser } from "@/lib/auth";
-import { useWeightStore } from "@/store/weightStore";
+import { logoutAction } from "@/actions/auth";
 
-export default function DashboardHeader() {
-  const router = useRouter();
-  const clearEditing = useWeightStore((state) => state.clearEditing);
+type DashboardHeaderProps = {
+  userName: string;
+};
 
-  const [userName, setUserName] = useState("사용자");
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+export default function DashboardHeader({ userName }: DashboardHeaderProps) {
+  const [isPending, startTransition] = useTransition();
 
-  useEffect(() => {
-    const supabase = createClient();
-
-    const getCurrentUser = async () => {
-      const { data, error } = await supabase.auth.getUser();
-
-      if (error || !data.user) {
-        setUserName("사용자");
-        return;
-      }
-
-      const name =
-        typeof data.user.user_metadata?.name === "string"
-          ? data.user.user_metadata.name
-          : "사용자";
-
-      setUserName(name);
-    };
-
-    void getCurrentUser();
-  }, []);
-
-  const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-
-      clearEditing();
-      await logoutUser();
-
-      router.push("/login");
-      router.refresh();
-    } catch (error) {
-      console.error("로그아웃 실패:", error);
-    } finally {
-      setIsLoggingOut(false);
-    }
+  const handleLogout = () => {
+    startTransition(async () => {
+      await logoutAction();
+    });
   };
 
   return (
@@ -66,9 +31,9 @@ export default function DashboardHeader() {
             variant="secondary"
             type="button"
             onClick={handleLogout}
-            disabled={isLoggingOut}
+            disabled={isPending}
           >
-            {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
+            {isPending ? "로그아웃 중..." : "로그아웃"}
           </Button>
         </div>
       </div>

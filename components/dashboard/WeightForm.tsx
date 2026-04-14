@@ -1,50 +1,47 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
-import { useWeightStore } from "@/store/weightStore";
-import useUserStore from "@/store/userStore";
-import { WeightRecord } from "@/types";
+import type { WeightFormValues, WeightRecord } from "@/types/weight";
 
 type FieldErrors = {
   date?: string;
   weightKg?: string;
 };
 
-const EMPTY_WEIGHTS: WeightRecord[] = [];
+type WeightFormProps = {
+  mode: "create" | "edit";
+  initialValues?: WeightRecord | null;
+  onSubmit: (values: WeightFormValues) => Promise<void>;
+  onCancel?: () => void;
+  isSubmitting?: boolean;
+};
 
-export default function WeightForm() {
-  const user = useUserStore((state) => state.user);
+function getToday() {
+  return new Date().toISOString().split("T")[0];
+}
 
-  const weights = useWeightStore((state) =>
-    user ? (state.weightMap[user._id] ?? EMPTY_WEIGHTS) : EMPTY_WEIGHTS,
-  );
-
-  const editingId = useWeightStore((state) => state.editingId);
-  const addWeight = useWeightStore((state) => state.addWeight);
-  const updateWeight = useWeightStore((state) => state.updateWeight);
-  const cancelEditing = useWeightStore((state) => state.cancelEditing);
-
-  const editingRecord = useMemo(
-    () => weights.find((item) => item.id === editingId) ?? null,
-    [weights, editingId],
-  );
-
+export default function WeightForm({
+  mode,
+  initialValues,
+  onSubmit,
+  onCancel,
+  isSubmitting = false,
+}: WeightFormProps) {
   const [date, setDate] = useState("");
   const [weightKg, setWeightKg] = useState("");
   const [memo, setMemo] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
 
-  const isEditMode = Boolean(editingRecord);
+  const isEditMode = mode === "edit" && !!initialValues;
 
   useEffect(() => {
-    if (editingRecord) {
-      setDate(editingRecord.date);
-      setWeightKg(String(editingRecord.weightKg));
-      setMemo(editingRecord.memo ?? "");
+    if (isEditMode && initialValues) {
+      setDate(initialValues.date);
+      setWeightKg(String(initialValues.weightKg));
+      setMemo(initialValues.memo);
       setErrors({});
       return;
     }
@@ -53,7 +50,7 @@ export default function WeightForm() {
     setWeightKg("");
     setMemo("");
     setErrors({});
-  }, [editingRecord]);
+  }, [isEditMode, initialValues]);
 
   const resetForm = () => {
     setDate("");
@@ -62,17 +59,12 @@ export default function WeightForm() {
     setErrors({});
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    if (!user) {
-      toast.error("로그인 정보를 확인할 수 없습니다.");
-      return;
-    }
 
     const parsedWeightKg = Number(weightKg);
     const nextErrors: FieldErrors = {};
-    const today = new Date().toISOString().split("T")[0];
+    const today = getToday();
 
     if (!date) {
       nextErrors.date = "날짜를 입력해주세요.";
@@ -95,29 +87,20 @@ export default function WeightForm() {
       return;
     }
 
-    if (isEditMode && editingRecord) {
-      updateWeight(user._id, editingRecord.id, {
-        date,
-        weightKg: Number(parsedWeightKg.toFixed(1)),
-        memo,
-      });
-      toast.success("기록이 수정되었습니다.");
-    } else {
-      addWeight(user._id, {
-        date,
-        weightKg: Number(parsedWeightKg.toFixed(1)),
-        memo,
-      });
-      toast.success("기록이 저장되었습니다.");
-    }
+    await onSubmit({
+      date,
+      weightKg: Number(parsedWeightKg.toFixed(1)),
+      memo: memo.trim(),
+    });
 
-    cancelEditing();
-    resetForm();
+    if (!isEditMode) {
+      resetForm();
+    }
   };
 
   const handleCancelEdit = () => {
-    cancelEditing();
     resetForm();
+    onCancel?.();
   };
 
   return (
@@ -128,7 +111,12 @@ export default function WeightForm() {
         </h2>
 
         {isEditMode && (
-          <Button type="button" variant="secondary" onClick={handleCancelEdit}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleCancelEdit}
+            disabled={isSubmitting}
+          >
             수정 취소
           </Button>
         )}
@@ -144,7 +132,9 @@ export default function WeightForm() {
           error={errors.date}
           onChange={(e) => {
             setDate(e.target.value);
-            if (errors.date) setErrors((prev) => ({ ...prev, date: "" }));
+            if (errors.date) {
+              setErrors((prev) => ({ ...prev, date: "" }));
+            }
           }}
         />
 
@@ -174,7 +164,15 @@ export default function WeightForm() {
           onChange={(e) => setMemo(e.target.value)}
         />
 
-        <Button type="submit">{isEditMode ? "수정 완료" : "저장하기"}</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting
+            ? isEditMode
+              ? "수정 중..."
+              : "저장 중..."
+            : isEditMode
+              ? "수정 완료"
+              : "저장하기"}
+        </Button>
       </form>
     </section>
   );

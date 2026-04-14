@@ -2,6 +2,12 @@ import LandingHeader from "@/components/landing/LandingHeader";
 import HeroSection from "@/components/landing/HeroSection";
 import FeatureSection from "@/components/landing/FeatureSection";
 import StartSection from "@/components/landing/StartSection";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "홈",
+  description: "개인 건강 기록을 관리하는 대시보드 서비스 소개 페이지",
+};
 
 export default function HomePage() {
   return (

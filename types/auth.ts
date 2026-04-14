@@ -1,28 +1,15 @@
-export interface Token {
-  accessToken: string;
-  refreshToken: string;
-}
+import type { User } from "@supabase/supabase-js";
 
-export interface User {
-  type: "user" | "seller";
-  _id: string;
-  email: string;
+export type AuthUser = User;
+
+export type AuthFieldErrors = Partial<{
   name: string;
-  image?: string;
-  token?: Token;
-}
-
-export type UserCreateForm = Pick<User, "name" | "email" | "type"> & {
+  email: string;
   password: string;
-  attach?: FileList;
-};
+  confirmPassword: string;
+}>;
 
-export type LoginForm = Pick<User, "email"> & {
-  password: string;
+export type AuthActionState = {
+  error: string; // 서버 에러용
+  fieldErrors: AuthFieldErrors; // 각 필드 에러용
 };
-
-export interface UserState {
-  user: User | null;
-  setUser: (user: User) => void;
-  resetUser: () => void;
-}

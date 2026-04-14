@@ -1,165 +1,122 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
-import { signupUser } from "@/lib/auth";
+import { useActionState, useState } from "react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import { signupAction } from "@/actions/auth";
+import type { AuthActionState } from "@/types/auth";
+import {
+  validateConfirmPassword,
+  validateEmail,
+  validateName,
+  validatePassword,
+} from "@/lib/validations/auth";
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const initialState: AuthActionState = {
+  error: "",
+  fieldErrors: {},
+};
 
 export default function SignupForm() {
-  const router = useRouter();
+  const [state, formAction, isPending] = useActionState(
+    signupAction,
+    initialState,
+  );
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [values, setValues] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
 
-  const [nameError, setNameError] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [confirmPasswordError, setConfirmPasswordError] = useState("");
-  const [formError, setFormError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [clientErrors, setClientErrors] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
 
-  const resetErrors = () => {
-    setNameError("");
-    setEmailError("");
-    setPasswordError("");
-    setConfirmPasswordError("");
-    setFormError("");
-  };
+  function handleChange(field: keyof typeof values, value: string) {
+    const nextValues = {
+      ...values,
+      [field]: value,
+    };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+    setValues(nextValues);
 
-    resetErrors();
-
-    const trimmedName = name.trim();
-    const trimmedEmail = email.trim();
-
-    let hasError = false;
-
-    if (!trimmedName) {
-      setNameError("이름을 입력해주세요.");
-      hasError = true;
-    }
-
-    if (!trimmedEmail) {
-      setEmailError("이메일을 입력해주세요.");
-      hasError = true;
-    } else if (!emailRegex.test(trimmedEmail)) {
-      setEmailError("올바른 이메일 형식을 입력해주세요.");
-      hasError = true;
-    }
-
-    if (!password) {
-      setPasswordError("비밀번호를 입력해주세요.");
-      hasError = true;
-    } else if (password.length < 8) {
-      setPasswordError("비밀번호는 8자 이상이어야 합니다.");
-      hasError = true;
-    }
-
-    if (!confirmPassword) {
-      setConfirmPasswordError("비밀번호 확인을 입력해주세요.");
-      hasError = true;
-    }
-
-    if (hasError) return;
-
-    if (password !== confirmPassword) {
-      setConfirmPasswordError("비밀번호가 일치하지 않습니다.");
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-
-      await signupUser({
-        name: trimmedName,
-        email: trimmedEmail,
-        password,
-      });
-
-      toast.success("회원가입이 완료되었습니다.");
-      router.push("/login");
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "회원가입 중 문제가 발생했습니다.";
-
-      setFormError(message);
-      toast.error(message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    setClientErrors({
+      name: nextValues.name ? validateName(nextValues.name) : "",
+      email: nextValues.email ? validateEmail(nextValues.email) : "",
+      password: nextValues.password
+        ? validatePassword(nextValues.password)
+        : "",
+      confirmPassword: nextValues.confirmPassword
+        ? validateConfirmPassword(
+            nextValues.password,
+            nextValues.confirmPassword,
+          )
+        : "",
+    });
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4">
+    <form action={formAction} className="flex w-full flex-col gap-4">
+      {state.error && (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-600">
+          {state.error}
+        </p>
+      )}
+
       <Input
         id="name"
+        name="name"
         label="이름"
         type="text"
         placeholder="이름 입력"
-        value={name}
-        error={nameError}
-        onChange={(e) => {
-          setName(e.target.value);
-          if (nameError) setNameError("");
-        }}
+        value={values.name}
+        onChange={(e) => handleChange("name", e.target.value)}
+        error={clientErrors.name || state.fieldErrors.name}
       />
 
       <Input
         id="email"
+        name="email"
         label="이메일"
         type="email"
         placeholder="example@email.com"
-        value={email}
-        error={emailError}
-        onChange={(e) => {
-          setEmail(e.target.value);
-          if (emailError) setEmailError("");
-        }}
+        value={values.email}
+        onChange={(e) => handleChange("email", e.target.value)}
+        error={clientErrors.email || state.fieldErrors.email}
       />
 
       <Input
         id="password"
+        name="password"
         label="비밀번호"
         type="password"
-        placeholder="비밀번호 입력"
-        value={password}
-        error={passwordError}
-        onChange={(e) => {
-          setPassword(e.target.value);
-          if (passwordError) setPasswordError("");
-        }}
+        placeholder="영문, 숫자, 특수문자 포함 8~20자"
+        value={values.password}
+        onChange={(e) => handleChange("password", e.target.value)}
+        error={clientErrors.password || state.fieldErrors.password}
       />
 
       <Input
         id="confirmPassword"
+        name="confirmPassword"
         label="비밀번호 확인"
         type="password"
         placeholder="비밀번호 다시 입력"
-        value={confirmPassword}
-        error={confirmPasswordError}
-        onChange={(e) => {
-          setConfirmPassword(e.target.value);
-          if (confirmPasswordError) setConfirmPasswordError("");
-        }}
+        value={values.confirmPassword}
+        onChange={(e) => handleChange("confirmPassword", e.target.value)}
+        error={
+          clientErrors.confirmPassword || state.fieldErrors.confirmPassword
+        }
       />
 
-      {formError && (
-        <p className="text-sm font-medium text-red-600">{formError}</p>
-      )}
-
-      <Button type="submit" disabled={isLoading}>
-        {isLoading ? "회원가입 중..." : "회원가입"}
+      <Button type="submit" disabled={isPending}>
+        {isPending ? "회원가입 중..." : "회원가입"}
       </Button>
 
       <p className="text-center text-sm text-gray-600">

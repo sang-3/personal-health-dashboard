@@ -1,9 +1,9 @@
 "use client";
 
 import Button from "@/components/ui/Button";
+import EmptyState from "@/components/dashboard/EmptyState";
 import { formatDate } from "@/lib/utils";
-import { WeightRecord } from "@/types/weight";
-import EmptyState from "./EmptyState";
+import type { WeightRecord } from "@/types/weight";
 
 type WeightListProps = {
   items: WeightRecord[];
@@ -52,11 +52,13 @@ export default function WeightList({
                     <p className="text-sm text-gray-500">
                       {formatDate(item.date)}
                     </p>
+
                     <p className="mt-1 text-lg font-semibold text-gray-900">
                       {item.weightKg.toFixed(1)}kg
                     </p>
+
                     <p className="mt-2 break-words text-sm text-gray-600">
-                      {item.memo?.trim() ? item.memo : "메모 없음"}
+                      {item.memo.trim() ? item.memo : "메모 없음"}
                     </p>
 
                     {isEditing && (
@@ -75,6 +77,7 @@ export default function WeightList({
                     >
                       수정
                     </Button>
+
                     <Button
                       type="button"
                       variant="danger"

@@ -1,113 +1,84 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
-import { loginUser } from "@/lib/auth";
+import { useActionState, useState } from "react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import { loginAction } from "@/actions/auth";
+import type { AuthActionState } from "@/types/auth";
+import { validateEmail } from "@/lib/validations/auth";
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const initialState: AuthActionState = {
+  error: "",
+  fieldErrors: {},
+};
 
 export default function LoginForm() {
-  const router = useRouter();
+  const [state, formAction, isPending] = useActionState(
+    loginAction,
+    initialState,
+  );
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [values, setValues] = useState({
+    email: "",
+    password: "",
+  });
 
-  const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [formError, setFormError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [clientErrors, setClientErrors] = useState({
+    email: "",
+    password: "",
+  });
 
-  const resetErrors = () => {
-    setEmailError("");
-    setPasswordError("");
-    setFormError("");
-  };
+  function handleEmailChange(value: string) {
+    setValues((prev) => ({ ...prev, email: value }));
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+    setClientErrors((prev) => ({
+      ...prev,
+      email: value ? validateEmail(value) : "",
+    }));
+  }
 
-    resetErrors();
+  function handlePasswordChange(value: string) {
+    setValues((prev) => ({ ...prev, password: value }));
 
-    const trimmedEmail = email.trim();
-    let hasError = false;
-
-    if (!trimmedEmail) {
-      setEmailError("이메일을 입력해주세요.");
-      hasError = true;
-    } else if (!emailRegex.test(trimmedEmail)) {
-      setEmailError("올바른 이메일 형식을 입력해주세요.");
-      hasError = true;
-    }
-
-    if (!password) {
-      setPasswordError("비밀번호를 입력해주세요.");
-      hasError = true;
-    }
-
-    if (hasError) return;
-
-    try {
-      setIsLoading(true);
-
-      await loginUser({
-        email: trimmedEmail,
-        password,
-      });
-
-      toast.success("로그인되었습니다.");
-      router.push("/dashboard");
-      router.refresh();
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "로그인 중 문제가 발생했습니다.";
-
-      setFormError(message);
-      toast.error(message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    setClientErrors((prev) => ({
+      ...prev,
+      password: "",
+    }));
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4">
+    <form action={formAction} className="flex w-full flex-col gap-4">
+      {state.error && (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-600">
+          {state.error}
+        </p>
+      )}
+
       <Input
         id="email"
+        name="email"
         label="이메일"
         type="email"
         placeholder="example@email.com"
-        value={email}
-        error={emailError}
-        onChange={(e) => {
-          setEmail(e.target.value);
-          if (emailError) setEmailError("");
-        }}
+        value={values.email}
+        onChange={(e) => handleEmailChange(e.target.value)}
+        error={clientErrors.email || state.fieldErrors.email}
       />
 
       <Input
         id="password"
+        name="password"
         label="비밀번호"
         type="password"
         placeholder="비밀번호 입력"
-        value={password}
-        error={passwordError}
-        onChange={(e) => {
-          setPassword(e.target.value);
-          if (passwordError) setPasswordError("");
-        }}
+        value={values.password}
+        onChange={(e) => handlePasswordChange(e.target.value)}
+        error={clientErrors.password || state.fieldErrors.password}
       />
 
-      {formError && (
-        <p className="text-sm font-medium text-red-600">{formError}</p>
-      )}
-
-      <Button type="submit" disabled={isLoading}>
-        {isLoading ? "로그인 중..." : "로그인"}
+      <Button type="submit" disabled={isPending}>
+        {isPending ? "로그인 중..." : "로그인"}
       </Button>
 
       <p className="text-center text-sm text-gray-600">
