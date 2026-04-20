@@ -3,6 +3,8 @@ import HeroSection from "@/components/landing/HeroSection";
 import FeatureSection from "@/components/landing/FeatureSection";
 import StartSection from "@/components/landing/StartSection";
 import { Metadata } from "next";
+import PreviewSection from "@/components/landing/PreviewSection";
+import FlowSection from "@/components/landing/FlowSection";
 
 export const metadata: Metadata = {
   title: "홈",
@@ -14,7 +16,9 @@ export default function HomePage() {
     <main className="min-h-screen bg-gray-50">
       <LandingHeader />
       <HeroSection />
+      <PreviewSection />
       <FeatureSection />
+      <FlowSection />
       <StartSection />
     </main>
   );
